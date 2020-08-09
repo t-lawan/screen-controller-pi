@@ -26,7 +26,7 @@ const ControlWrapper = styled.div`
 
 const ControlText = styled.p`
   color: rgb(0, 255, 0);
-`
+`;
 interface VideoCanvasProps {
   [propName: string]: any;
 }
@@ -35,6 +35,8 @@ interface VideoCanvasState {
   width: number;
   height: number;
   index: number;
+  isStreaming: boolean;
+  streamUrl: string;
 }
 export default class VideoCanvas extends React.Component<
   VideoCanvasProps,
@@ -60,7 +62,10 @@ export default class VideoCanvas extends React.Component<
     this.state = {
       width: 0,
       height: 0,
-      index: 0
+      index: 0,
+      isStreaming: false,
+      streamUrl:
+        "http://admin:false.memory@192.168.0.25/ISAPI/Streaming/channels/102/httpPreview"
     };
     this.canvas = React.createRef();
   }
@@ -85,8 +90,14 @@ export default class VideoCanvas extends React.Component<
     this.video.setAttribute("crossorigin", "anonymous");
 
     let source = document.createElement("source");
-    source.setAttribute("src", this.playlist[this.index]);
-    source.setAttribute("type", "video/mp4");
+    if (this.state.isStreaming) {
+      source.setAttribute("src", this.state.streamUrl);
+      source.setAttribute("type", "video/mp4");
+    } else {
+      source.setAttribute("src", this.playlist[this.index]);
+      source.setAttribute("type", "video/mp4");
+    }
+
     this.video.appendChild(source);
   };
 
@@ -119,20 +130,39 @@ export default class VideoCanvas extends React.Component<
   };
 
   startPlaylist = () => {
-    if(this.video) {
+    if (this.video) {
       this.video.currentTime = 0;
+    }
+
+    if (this.state.isStreaming) {
+      this.setState({
+        isStreaming: false
+      });
     }
 
     this.startRender();
   };
 
+  startStream = () => {
+    if (!this.state.isStreaming) {
+      this.setState({
+        isStreaming: true
+      });
+
+      this.createVideoElement()
+    }
+
+    this.startRender();
+
+  };
+
   stopPlaylist = () => {
-    if(this.animation && this.video) {
-      this.video.pause()
+    if (this.animation && this.video) {
+      this.video.pause();
       this.setState({
         index: 0
-      })
-      cancelAnimationFrame(this.animation)
+      });
+      cancelAnimationFrame(this.animation);
     }
   };
 
@@ -192,11 +222,10 @@ export default class VideoCanvas extends React.Component<
           height={this.state.height}
         />
         <ControlWrapper>
-        <ControlText onClick={this.startPlaylist}>Start Playlist</ControlText>
-        <ControlText onClick={this.stopPlaylist}>Stop Playlist</ControlText>
-        <ControlText>Start Livestream</ControlText>
-        <ControlText>Stop Livestream</ControlText>
-
+          <ControlText onClick={this.startPlaylist}>Start Playlist</ControlText>
+          <ControlText onClick={this.stopPlaylist}>Stop Playlist</ControlText>
+          <ControlText>Start Livestream</ControlText>
+          <ControlText>Stop Livestream</ControlText>
         </ControlWrapper>
       </DivWrapper>
     );
