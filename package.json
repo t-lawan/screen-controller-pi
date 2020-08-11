@@ -32,6 +32,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:1": "REACT_APP_RASPBERRY_PI_ID=1 react-scripts build",
+    "build:2": "REACT_APP_RASPBERRY_PI_ID=2 react-scripts build",
+    "build:3": "REACT_APP_RASPBERRY_PI_ID=3 react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
