@@ -10,12 +10,12 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = (props: LayoutProps) => {
   return (
     <>
+      <State />
       <Communication />
       <Helmet>
         <title> {props.title} - Screen Controller </title>
 
       </Helmet>
-      {/* <State /> */}
       <div>
           {props.children}
       </div>

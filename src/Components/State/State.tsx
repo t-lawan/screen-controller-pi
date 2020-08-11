@@ -20,9 +20,11 @@ class State extends React.Component<IStateProps, {}> {
       if(!this.props.hasLoaded) {
         let videos;
         let screens;
+
         let response = await RequestManager.getVideos();
+
         if(response && response.data.data) {
-          videos = response.data.data
+          videos = response.data.data;
           this.props.setVideos(videos);
         }
 

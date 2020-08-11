@@ -6,6 +6,8 @@ import { sendMessageComplete } from '../../Store/actions';
 import { connect } from "react-redux";
 import { IWebsocketMessage } from '../../Interfaces/IRequestData';
 import { EWSMessageType } from "../../Enums/EWSMessageType";
+import { IScreen } from "../../Interfaces/IScreen";
+import { IPlaylistEntry } from '../../Interfaces/IPlaylistEntry';
 
 const DivWrapper = styled.div`
   position: fixed;
@@ -38,6 +40,7 @@ interface VideoCanvasProps {
   ws_message: string;
   ws_message_sent: boolean;
   sendMessageComplete: Function;
+  screens: IScreen[]
 }
 
 interface VideoCanvasState {
@@ -46,6 +49,7 @@ interface VideoCanvasState {
   index: number;
   isStreaming: boolean;
   streamUrl: string;
+  playlist: IPlaylistEntry[];
 }
 class VideoCanvas extends React.Component<
   VideoCanvasProps,
@@ -62,7 +66,6 @@ class VideoCanvas extends React.Component<
 
   playlist = [
     "http://10.0.0.111:8080/video",
-    "http://10.0.0.111:8080/video",
   ];
 
   constructor(props: VideoCanvasProps) {
@@ -73,8 +76,11 @@ class VideoCanvas extends React.Component<
       index: 0,
       isStreaming: false,
       streamUrl:
-        "http://admin:false.memory@192.168.0.25/ISAPI/Streaming/channels/102/httpPreview"
+        "http://admin:false.memory@192.168.0.25/ISAPI/Streaming/channels/102/httpPreview",
+        playlist: []
     };
+
+
     this.canvas = React.createRef();
   }
   componentDidMount() {
@@ -84,11 +90,27 @@ class VideoCanvas extends React.Component<
     });
     this.createVideoElement();
     this.setVideoCanvasContext();
+
+
+
   }
 
   componentDidUpdate(prevProps: VideoCanvasProps) {
     if( this.props.ws_message_sent && (prevProps.ws_message_sent !== this.props.ws_message_sent)) {
       this.handleWebsocketMessage();
+    }
+
+    if(prevProps.screens.length === 0 && (this.props.screens !== prevProps.screens)) {
+      let screen =  this.props.screens.find((scr)=> {
+        return scr.raspberry_pi_id == 3
+      })
+      if(screen) {
+        this.setState({
+          playlist: screen.video_file_playlist
+        })
+        this.updateSource()
+      }
+
     }
   }
 
@@ -128,17 +150,34 @@ class VideoCanvas extends React.Component<
     this.video.setAttribute("display", "none");
     this.video.setAttribute("mute", "1");
     this.video.setAttribute("crossorigin", "anonymous");
-
-    let source = document.createElement("source");
-    if (this.state.isStreaming) {
-      source.setAttribute("src", this.state.streamUrl);
-      source.setAttribute("type", "video/mp4");
-    } else {
-      source.setAttribute("src", this.playlist[this.index]);
-      source.setAttribute("type", "video/mp4");
-    }
-    this.video.appendChild(source);
+    // let source = document.createElement("source");
+    // if (this.state.isStreaming) {
+    //   source.setAttribute("src", this.state.streamUrl);
+    //   source.setAttribute("type", "video/mp4");
+    // } else {
+    //   source.setAttribute("src", this.state.playlist[this.index]);
+    //   source.setAttribute("type", "video/mp4");
+    // }
+    // this.video.appendChild(source);
   };
+
+  updateSource = () => {
+    if(this.video) {
+      let source = document.createElement("source");
+      if (this.state.isStreaming) {
+        source.setAttribute("src", this.state.streamUrl);
+        source.setAttribute("type", "video/mp4");
+      } else {
+        if(this.state.playlist.length > 0) {
+          let url = `http://10.0.0.111:8080/video/${this.state.playlist[this.index].id}`
+          console.log('screen',url)
+          source.setAttribute("src", url);
+          source.setAttribute("type", "video/mp4");
+        }
+      }
+      this.video.appendChild(source);
+    }
+  }
 
   setPlaylist = () => {};
 
@@ -169,6 +208,8 @@ class VideoCanvas extends React.Component<
   };
 
   startPlaylist = () => {
+    this.updateSource()
+
     if (this.video) {
       this.video.currentTime = 0;
     }
@@ -188,7 +229,7 @@ class VideoCanvas extends React.Component<
         isStreaming: true
       });
 
-      this.createVideoElement()
+      this.updateSource()
     }
 
     this.startRender();
@@ -218,7 +259,7 @@ class VideoCanvas extends React.Component<
   };
 
   incrementVideoIndex = () => {
-    if (this.index + 1 === this.playlist.length) {
+    if (this.index + 1 === this.state.playlist.length) {
       this.index = 0;
     } else {
       this.index = this.index + 1;
@@ -242,7 +283,7 @@ class VideoCanvas extends React.Component<
       if (percent >= 0.99) {
         this.incrementVideoIndex();
         this.video.pause();
-        this.createVideoElement();
+        this.updateSource();
       }
 
       this.animation = requestAnimationFrame(this.startRender);
@@ -253,6 +294,7 @@ class VideoCanvas extends React.Component<
   // so videojs won't create additional wrapper in the DOM
   // see https://github.com/videojs/video.js/pull/3856
   render() {
+
     return (
       <DivWrapper>
         <canvas
@@ -274,7 +316,8 @@ class VideoCanvas extends React.Component<
 const mapStateToProps = (state: IState) => {
   return {
     ws_message: state.ws_message,
-    ws_message_sent: state.ws_message_sent
+    ws_message_sent: state.ws_message_sent,
+    screens: state.screens
   };
 };
 

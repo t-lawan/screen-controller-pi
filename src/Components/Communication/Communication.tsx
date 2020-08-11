@@ -48,17 +48,16 @@ class Communication extends React.Component<
 
       switch (message.message) {
         case EWSMessageType.START_STREAM:
-          console.log("START STREAM");
           this.props.sendMessage(event.data);
           break;
         case EWSMessageType.STOP_STREAM:
-          console.log("STOP STREAM");
+          this.props.sendMessage(event.data);
           break;
         case EWSMessageType.START_PLAYLIST:
-          console.log("START_PLAYLIST");
+          this.props.sendMessage(event.data);
           break;
         case EWSMessageType.STOP_PLAYLIST:
-          console.log("STOP_PLAYLIST");
+          this.props.sendMessage(event.data);
           break;
         default:
             console.log('NOT ACTIONABLE');
