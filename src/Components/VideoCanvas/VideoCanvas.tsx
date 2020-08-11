@@ -61,9 +61,8 @@ class VideoCanvas extends React.Component<
   index = 0;
 
   playlist = [
-    "https://marie-leuder.s3.eu-west-2.amazonaws.com/VIDEO_ONE.mp4",
-    "https://marie-leuder.s3.eu-west-2.amazonaws.com/VIDEO_TWO.mp4",
-    "https://marie-leuder.s3.eu-west-2.amazonaws.com/VIDEO_THREE.mp4"
+    "http://10.0.0.111:8080/video",
+    "http://10.0.0.111:8080/video",
   ];
 
   constructor(props: VideoCanvasProps) {
