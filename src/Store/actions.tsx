@@ -5,6 +5,8 @@ export const SET_SCREENS = 'SET_SCREENS';
 export const HAS_LOADED = 'HAS_LOADED';
 export const OPEN_MODAL = "OPEN_MODAL";
 export const CLOSE_MODAL = "CLOSE_MODAL";
+export const SEND_MESSAGE = 'SEND_MESSAGE'
+export const SEND_MESSAGE_COMPLETE = 'SEND_MESSAGE_COMPLETE'
 
 
 export const hasLoaded = () => {
@@ -24,5 +26,21 @@ export const setScreens = (screens: IScreen[]) => {
     return {
         type: SET_SCREENS,
         screens: screens
+    }
+}
+
+export const sendMessage = (message: string) => {
+    return  {
+        type: SEND_MESSAGE,
+        ws_message: message,
+        ws_message_sent: true
+
+    }
+}
+export const sendMessageComplete = () => {
+    return  {
+        type: SEND_MESSAGE_COMPLETE,
+        ws_message: '',
+        ws_message_sent: false
     }
 }

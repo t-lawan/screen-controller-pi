@@ -1,5 +1,11 @@
 import React from "react";
 import styled from "styled-components";
+import { Dispatch } from "redux";
+import { IState } from '../../Store/reducer';
+import { sendMessageComplete } from '../../Store/actions';
+import { connect } from "react-redux";
+import { IWebsocketMessage } from '../../Interfaces/IRequestData';
+import { EWSMessageType } from "../../Enums/EWSMessageType";
 
 const DivWrapper = styled.div`
   position: fixed;
@@ -29,6 +35,9 @@ const ControlText = styled.p`
 `;
 interface VideoCanvasProps {
   [propName: string]: any;
+  ws_message: string;
+  ws_message_sent: boolean;
+  sendMessageComplete: Function;
 }
 
 interface VideoCanvasState {
@@ -38,7 +47,7 @@ interface VideoCanvasState {
   isStreaming: boolean;
   streamUrl: string;
 }
-export default class VideoCanvas extends React.Component<
+class VideoCanvas extends React.Component<
   VideoCanvasProps,
   VideoCanvasState
 > {
@@ -78,6 +87,38 @@ export default class VideoCanvas extends React.Component<
     this.setVideoCanvasContext();
   }
 
+  componentDidUpdate(prevProps: VideoCanvasProps) {
+    if( this.props.ws_message_sent && (prevProps.ws_message_sent !== this.props.ws_message_sent)) {
+      this.handleWebsocketMessage();
+    }
+  }
+
+  handleWebsocketMessage = () => {
+    let wsMessage: IWebsocketMessage = JSON.parse(this.props.ws_message);
+    switch (wsMessage.message) {
+      case EWSMessageType.START_STREAM:
+        this.startStream()
+        console.log("START STREAM");
+        break;
+      case EWSMessageType.STOP_STREAM:
+        this.startPlaylist();
+        console.log("STOP STREAM");
+        break;
+      case EWSMessageType.START_PLAYLIST:
+        this.startPlaylist();
+        console.log("START_PLAYLIST");
+        break;
+      case EWSMessageType.STOP_PLAYLIST:
+        this.stopPlaylist();
+        console.log("STOP_PLAYLIST");
+        break;
+      default:
+          console.log('NOT ACTIONABLE');
+          break;
+    }
+    this.props.sendMessageComplete();
+  }
+
   createVideoElement = () => {
     if (this.video) {
       this.video.remove();
@@ -97,7 +138,6 @@ export default class VideoCanvas extends React.Component<
       source.setAttribute("src", this.playlist[this.index]);
       source.setAttribute("type", "video/mp4");
     }
-
     this.video.appendChild(source);
   };
 
@@ -231,3 +271,21 @@ export default class VideoCanvas extends React.Component<
     );
   }
 }
+
+const mapStateToProps = (state: IState) => {
+  return {
+    ws_message: state.ws_message,
+    ws_message_sent: state.ws_message_sent
+  };
+};
+
+const mapDispatchToProps = (dispatch: Dispatch) => {
+  return {
+    sendMessageComplete: () => dispatch(sendMessageComplete())
+  };
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(VideoCanvas);
