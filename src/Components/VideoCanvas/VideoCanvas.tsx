@@ -183,7 +183,7 @@ class VideoCanvas extends React.Component<
 
   setVideoCanvasContext = () => {
     if (this.canvas && this.canvas.current) {
-      this.canvasContext = this.canvas.current.getContext("2d");
+      this.canvasContext = this.canvas.current.getContext("2d", { alpha: false });
     }
   };
 
@@ -203,7 +203,7 @@ class VideoCanvas extends React.Component<
 
   updateFilter = () => {
     if (this.canvasContext) {
-      this.canvasContext.filter = `blur(${this.blur}%) grayscale${this.grayscale}%}`;
+      // this.canvasContext.filter = `blur(${this.blur}%) grayscale${this.grayscale}%}`;
     }
   };
 
