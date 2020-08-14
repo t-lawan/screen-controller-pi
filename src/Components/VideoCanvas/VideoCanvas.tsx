@@ -57,6 +57,7 @@ class VideoCanvas extends React.Component<
 > {
   video: HTMLVideoElement | null = null;
   canvas: React.RefObject<HTMLCanvasElement>;
+  img: HTMLImageElement | null = null;
   canvasContext: CanvasRenderingContext2D | null = null;
   animation: number | null = null;
   alpha = 1;
@@ -88,10 +89,7 @@ class VideoCanvas extends React.Component<
       width: window.innerWidth,
       height: window.innerHeight
     });
-    this.createVideoElement();
     this.setVideoCanvasContext();
-
-
 
   }
 
@@ -150,16 +148,18 @@ class VideoCanvas extends React.Component<
     this.video.setAttribute("display", "none");
     this.video.setAttribute("mute", "1");
     this.video.setAttribute("crossorigin", "anonymous");
-    // let source = document.createElement("source");
-    // if (this.state.isStreaming) {
-    //   source.setAttribute("src", this.state.streamUrl);
-    //   source.setAttribute("type", "video/mp4");
-    // } else {
-    //   source.setAttribute("src", this.state.playlist[this.index]);
-    //   source.setAttribute("type", "video/mp4");
-    // }
-    // this.video.appendChild(source);
   };
+
+  createImageElement = () => {
+    if(this.img) {
+      this.img.remove()
+    }
+
+    this.img = document.createElement('img');
+    this.img.src = this.state.streamUrl;
+    this.img.setAttribute("width", "1");
+    this.img.setAttribute("height", "1");
+  }
 
   updateSource = () => {
     if(this.video) {
@@ -169,8 +169,7 @@ class VideoCanvas extends React.Component<
         source.setAttribute("type", "video/mp4");
       } else {
         if(this.state.playlist.length > 0) {
-          let url = `http://10.0.0.111:8080/video/${this.state.playlist[this.index].id}`
-          console.log('screen',url)
+          let url = `http://localhost:8080/video/${this.state.playlist[this.index].id}`
           source.setAttribute("src", url);
           source.setAttribute("type", "video/mp4");
         }
@@ -208,6 +207,7 @@ class VideoCanvas extends React.Component<
   };
 
   startPlaylist = () => {
+    this.createVideoElement()
     this.updateSource()
 
     if (this.video) {
@@ -229,7 +229,9 @@ class VideoCanvas extends React.Component<
         isStreaming: true
       });
 
-      this.updateSource()
+      this.createImageElement()
+
+      // this.updateSource()
     }
 
     this.startRender();
@@ -258,6 +260,18 @@ class VideoCanvas extends React.Component<
     }
   };
 
+  renderImageToCanvas = () => {
+    if (this.canvasContext && this.img) {
+      this.canvasContext.drawImage(
+        this.img,
+        0,
+        0,
+        this.state.width,
+        this.state.height
+      );
+    }
+  };
+
   incrementVideoIndex = () => {
     if (this.index + 1 === this.state.playlist.length) {
       this.index = 0;
@@ -267,27 +281,35 @@ class VideoCanvas extends React.Component<
   };
 
   startRender = () => {
-    if (this.video) {
-      this.video.play();
-      let percent = this.video.currentTime / this.video.duration;
-
-      if (percent < 0.05) {
-        this.fadeIn();
+    if(!this.state.isStreaming) {
+      if (this.video) {
+        this.video.play();
+        let percent = this.video.currentTime / this.video.duration;
+  
+        if (percent < 0.05) {
+          this.fadeIn();
+        }
+        this.renderVideoToCanvas();
+  
+        if (percent > 0.9) {
+          this.fadeOut();
+        }
+  
+        if (percent >= 0.99) {
+          this.incrementVideoIndex();
+          this.video.pause();
+          this.updateSource();
+        }
+  
+        this.animation = requestAnimationFrame(this.startRender);
       }
-      this.renderVideoToCanvas();
-
-      if (percent > 0.9) {
-        this.fadeOut();
+    } else {
+      if(this.img) {
+        this.renderImageToCanvas();
+        this.animation = requestAnimationFrame(this.startRender);
       }
-
-      if (percent >= 0.99) {
-        this.incrementVideoIndex();
-        this.video.pause();
-        this.updateSource();
-      }
-
-      this.animation = requestAnimationFrame(this.startRender);
     }
+
   };
 
   // wrap the player in a div with a `data-vjs-player` attribute
@@ -305,7 +327,7 @@ class VideoCanvas extends React.Component<
         <ControlWrapper>
           <ControlText onClick={this.startPlaylist}>Start Playlist</ControlText>
           <ControlText onClick={this.stopPlaylist}>Stop Playlist</ControlText>
-          <ControlText>Start Livestream</ControlText>
+          <ControlText onClick={this.startStream}>Start Livestream</ControlText>
           <ControlText>Stop Livestream</ControlText>
         </ControlWrapper>
       </DivWrapper>
